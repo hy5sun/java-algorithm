@@ -14,11 +14,9 @@ ex) N = 9, M = 3, 1 2 3 4 5 6 7 8 9 => (1, 2, 3, 4, 5) (6, 7) (8, 9) : answer = 
 알고리즘 설계 (강의 듣고서 재설계):
 lt는 최소 용량, rt는 최대 용량으로 설정한다. 최대 용량의 초깃값은 모든 음악의 합이다.
 mid = (lt + rt) / 2로 설정한다.
-원소를 순서대로 더해가면서 mid와 같거나 넘으면 cnt (DVD 간의 경계선) 를 더해준다.
-이때 sum이 mid와 값이 같으면 다음 원소는 0부터 다시 더해야 되기 때문에 sum = 0 으로 설정해주고,
-mid 보다 크면 sum = 마지막으로 더한 원소로 해준다. 이전 DVD에 포함되지 않은 원소부터 다음 원소와 더해야 되기 때문이다.
-주의할 점은 끝까지 다 더했는데, mid 보다 sum이 큰 상태여서 마지막 원소가 DVD에 포함되지 않은 상태를 고려해야 된다는 점이다.
-따라서 sum이 0이 아니라면 (마지막으로 성립된 조건이 sum == mid 가 아니라면) cnt++를 해줘서 마지막 원소도 비디오에 포함되도록 한다.
+song을 순회하면서 무작정 더하지 말고, 더했을 때 mid 값을 넣는지 먼저 확인한다. -> 실행 시간을 단축할 수 있다.
+넘는다면 sum = 현재 원소로 설정하고, cnt(비디오 개수)를 더해준다.
+넘지 않는다면 기존 sum에 원소를 계속 더한다.
 cnt가 M(최대 비디오 개수)보다 작거나 같으면 조건을 충족한 것이므로 최솟값을 비교하여 answer에 저장하도록 한다.
  */
 
@@ -38,32 +36,23 @@ public class Q3 {
         int[] song = Arrays.stream(br.readLine().split(" "))
                 .mapToInt(Integer::parseInt).toArray();
 
-        int total = 0;
-        for (int length : song) {
-            total += length;
-        }
+        int total = Arrays.stream(song).sum();
 
         int lt = 1, rt = total, mid;
-        int cnt = 0, sum, answer = total;
+        int cnt, sum, answer = total;
 
         while (lt <= rt) {
             mid = (lt + rt) / 2;
             sum = 0;
-            cnt = 0;
+            cnt = 1;
 
-            for (int i = 0; i < N; i++) {
-                sum += song[i];
-                if (sum == mid) {
-                    sum = 0;
+            for (int s : song) {
+                if (s + sum > mid) {
+                    sum = s;
                     cnt++;
-                } else if (sum > mid) {
-                    sum = song[i];
-                    cnt++;
+                } else {
+                    sum += s;
                 }
-            }
-
-            if (sum != 0) {
-                cnt++;
             }
 
             if (cnt <= M) {
