@@ -9,11 +9,18 @@ N명의 지원자의 (키, 몸무게) 정보가 주어진다.
 
 알고리즘 설계:
 자기보다 키, 몸무게 모두 큰 사람이 존재하면 탈락이다.
-먼저 키를 기준으로 내림차순 정렬하고, 같은 키면 몸무게 내에서 다시 내림차순 정렬을 한다.
+먼저 키를 기준으로 오름차순 정렬하고, 같은 키면 몸무게 내에서 다시 오름차순 정렬을 한다.
 순서대로 리스트를 돌면서 키, 몸무게 모두 더 큰 사람이 존재하면 해당 사람은 탈락하도록 설계한다.
 내 앞사람 보다는 무조건 키/몸무게 둘 중 하나는 크기 때문에 뒤에 있는 사람과만 비교하면 된다.
 
 시간 복잡도 : O(N²)
+
+수정된 설계:
+먼저 키를 기준으로 내림차순 정렬을 하고, 따로 for 문으로 몸무게가 더 큰 사람이 있는지 확인한다.
+키가 큰 사람부터 돌기 때문에 키가 더 작은 사람이 합격하려면 몸무게가 커야 된다.
+한 사람이 합격할 때마다 그 사람의 몸무게보다 항상 더 크면 되기 때문에 largest 변수에 그 사람의 몸무게를 저장하고, 그 값과 뒤에 있는 사람들의 몸무게를 비교한다.
+
+시간 복잡도 : O(NlogN)
  */
 
 import java.io.InputStreamReader;
@@ -34,24 +41,14 @@ public class Q6 {
             apply.add(info);
         }
 
-        apply.sort(new Comparator<int[]>() {
-            @Override
-            public int compare(int[] a, int[] b) {
-                if (a[0] != b[0]) return Integer.compare(a[0], b[0]);
-                return Integer.compare(a[1], b[1]);
-            }
-        });
+        apply.sort(Comparator.comparing(a -> a[0], Comparator.reverseOrder()));
 
-        int ht, wt, cnt = N;
+        int passedWeight = 0, cnt = 0;
 
-        for (int i = 0; i < N; i++) {
-            ht = apply.get(i)[0];
-            wt = apply.get(i)[1];
-            for (int j = i; j < N; j++) {
-                if (ht < apply.get(j)[0] && wt < apply.get(j)[1]) {
-                    cnt-=1;
-                    break;
-                }
+        for (int[] a : apply) {
+            if (a[1] > passedWeight) {
+                cnt += 1;
+                passedWeight = a[1];
             }
         }
 
