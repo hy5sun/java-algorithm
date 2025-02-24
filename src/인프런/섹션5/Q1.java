@@ -31,33 +31,28 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Q1 {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String[] input = br.readLine().split(" ");
 
-        List<Integer> nums = Arrays.stream(input[0].split(""))
-                .map(Integer::parseInt)
-                .collect(Collectors.toList());
+        int[] nums = Arrays.stream(input[0].split(""))
+                .mapToInt(Integer::parseInt)
+                .toArray();
 
         int m = Integer.parseInt(input[1]);
         Stack<Integer> stack = new Stack<>();
 
-        for (int i = 0; i < nums.size(); i++) {
+        for (int i = 0; i < nums.length; i++) {
             if (stack.empty()) {
-                stack.push(nums.get(i));
+                stack.push(nums[i]);
             } else {
-                while (!stack.empty() && m != 0) {
-                    if (stack.peek() >= nums.get(i)) {
-                        break;
-                    } else {
-                        stack.pop();
-                        m -= 1;
-                    }
+                while (!stack.empty() && m != 0 && stack.peek() < nums[i]) {
+                    stack.pop();
+                    m -= 1;
                 }
-                stack.push(nums.get(i));
+                stack.push(nums[i]);
             }
         }
 
