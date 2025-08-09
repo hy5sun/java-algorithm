@@ -24,21 +24,22 @@ public class Main {
         sb = new StringBuilder();
 
         combination(1, 0);
+
+        System.out.println(sb.toString());
     }
 
-    private static void combination(int selectedIndex, int elementIndex) {
-        if (elementIndex == M) {
+    private static void combination(int startNum, int index) {
+        if (index == M) {
             for (int num : nums) {
                 sb.append(num).append(" ");
             }
-            System.out.println(sb.toString());
-            sb.setLength(0);
+            sb.append("\n");
             return;
         }
-        
-        for (int numIdx = selectedIndex; numIdx <= N; numIdx++) {
-            nums[elementIndex] = numIdx;
-            combination(numIdx + 1, elementIndex + 1);
+
+        for (int nextNum = startNum; nextNum <= N; nextNum++) {
+            nums[index] = nextNum;
+            combination(nextNum + 1, index + 1);
         }
     }
 }
