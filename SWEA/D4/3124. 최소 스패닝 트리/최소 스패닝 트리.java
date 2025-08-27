@@ -1,9 +1,11 @@
+
 import java.util.*;
 import java.io.*;
 
 /**
  * SW3124. 최소 스패닝 트리
  * 
+ * @author 김효선
  * 
  * [문제]
  * - 최소 스패닝 트리 구하기
@@ -13,16 +15,21 @@ import java.io.*;
  *  - 테스트 케이스 수
  *  - 정점의 개수 V , 간선의 개수 E
  *  - E개 만큼 A 정점, B 정점, C 가중치
- *      - 2차원 배열에 저장하기
+ *      - 인접 리스트에 저장하기
  * 
- * 2. 오름차순 정렬하기
+ * 2. 1부터 시작해서 Prim 알고리즘을 실행한다.
+ *  - 1 방문처리 하기
+ *  - 1과 연결된 다른 정점들 찾아서 큐에 넣기
+ *  - 큐가 빌 때까지 다음을 반복
+ *      - 큐에서 맨 앞 요소 꺼내기
+ *      - 방문 여부 확인하기
+ *          - 방문 했으면 중지, 안 했으면 다음을 진행
+ *      - 방문 처리하기
+ *      - 가중치 더하기
+ *      - 현재 정점과 연결되어 있는 다른 정점을 찾아서 큐에 넣기
  * 
- * 3. rank, parent 초기화하기
+ * 3. 가중치 출력하기
  * 
- * 4. 저장한 간선 개수만큼 돌기
- *  - 부모가 같은지 확인
- *      - 같으면 멈추기
- *      - 다르면 합치고, 가중치 더하기
  */
 public class Solution {
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -30,11 +37,24 @@ public class Solution {
     static StringBuilder sb = new StringBuilder();
 
     static int vertexCnt, edgeCnt;
-    static int[][] edges;
+    static List<List<Node>> edges;
     static long totalWeight;
 
-    static int[] parent;
-    static int[] rank;
+    static class Node {
+        int vertex, weight;
+
+        public Node(int vertex, int weight) {
+            this.vertex = vertex;
+            this.weight = weight;
+        }
+    }
+
+    static class NodeComparator implements Comparator<Node> {
+        @Override
+        public int compare(Node n1, Node n2) {
+            return n1.weight - n2.weight;
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         // 1. 입력 받기
@@ -47,10 +67,13 @@ public class Solution {
             vertexCnt = Integer.parseInt(st.nextToken());
             edgeCnt = Integer.parseInt(st.nextToken());
 
-            edges = new int[edgeCnt][3];
+            edges = new ArrayList<>();
+
+            for (int idx = 0; idx <= vertexCnt; idx++)
+                edges.add(new ArrayList<>());
 
             // - E개 만큼 A 정점, B 정점, C 가중치
-            //     - 2차원 배열에 저장하기
+            //     - 인접 리스트 저장하기
             for (int idx = 0; idx < edgeCnt; idx++) {
                 st = new StringTokenizer(br.readLine().trim());
 
@@ -58,66 +81,55 @@ public class Solution {
                 int vertex2 = Integer.parseInt(st.nextToken());
                 int weight = Integer.parseInt(st.nextToken());
 
-                edges[idx] = new int[]{vertex1, vertex2, weight};
+                edges.get(vertex1).add(new Node(vertex2, weight));
+                edges.get(vertex2).add(new Node(vertex1, weight));
             }
-
-            // 2. 오름차순 정렬하기
-            Arrays.sort(edges, Comparator.comparingInt(edge -> edge[2]));
 
             totalWeight = 0;
 
-            // 3. rank, parent 초기화하기
-            make();
+            // 2. 1부터 시작해서 Prim 알고리즘을 실행한다.
+            prim(1);
 
-            // 4. 저장한 간선 개수만큼 돌기
-            //    *  - 부모가 같은지 확인
-            //    *      - 같으면 멈추기
-            //    *      - 다르면 합치고, 가중치 더하기
-            for (int[] edge : edges) {
-                int parentA = find(edge[0]);
-                int parentB = find(edge[1]);
-
-                if (parentA == parentB) continue;
-
-                union(edge[0], edge[1]);
-
-                totalWeight += edge[2];
-            }
-
+            // 3. 가중치 출력하기
             sb.append("#").append(testCase).append(" ").append(totalWeight).append("\n");
         }
 
         System.out.println(sb.toString());
     }
     
-    private static void make() {
-        parent = new int[vertexCnt+1];
-        rank = new int[vertexCnt+1];
+    // 2. 1부터 시작해서 Prim 알고리즘을 실행한다.
+    //    *  - 1 방문처리 하기
+    //    *  - 1과 연결된 다른 정점들 찾아서 큐에 넣기
+    //    *  - 큐가 빌 때까지 다음을 반복
+    //    *      - 큐에서 맨 앞 요소 꺼내기
+    //    *      - 방문 여부 확인하기
+    //    *          - 방문 했으면 중지, 안 했으면 다음을 진행
+    //    *      - 방문 처리하기
+    //    *      - 가중치 더하기
+    //    *      - 현재 정점과 연결되어 있는 다른 정점을 찾아서 큐에 넣기
+    private static void prim(int startIdx) {
+        PriorityQueue<Node> queue = new PriorityQueue<>(new NodeComparator());
+        boolean[] visited = new boolean[vertexCnt+1];
 
-        for (int idx = 1; idx <= vertexCnt; idx++)
-            parent[idx] = idx;
-    }
+        visited[startIdx] = true;
 
-    private static int find(int element) {
-        if (element == parent[element]) return element;
+        List<Node> nodes = edges.get(startIdx);
+        for (Node node : nodes)
+            queue.offer(new Node(node.vertex, node.weight));
 
-        return parent[element] = find(parent[element]);
-    }
+        while (!queue.isEmpty()) {
+            Node current = queue.poll();
 
-    private static void union(int elementA, int elementB) {
-        int parentA = find(elementA);
-        int parentB = find(elementB);
+            int currentIdx = current.vertex;
+            
+            if (visited[currentIdx]) continue;
 
-        if (parentA == parentB) return;
+            visited[currentIdx] = true;
+            totalWeight += current.weight;
 
-        if (rank[parentA] > rank[parentB]) {
-            parent[parentB] = parentA;
-            return;
+            nodes = edges.get(currentIdx);
+            for (Node node : nodes)
+                queue.offer(new Node(node.vertex, node.weight));
         }
-
-        parent[parentA] = parentB;
-
-        if (rank[parentA] == rank[parentB])
-            rank[parentB]++;
     }
 }
